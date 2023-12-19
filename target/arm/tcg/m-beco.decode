@@ -1,0 +1,41 @@
+#  ARM translation: M-profile Beco instructions
+#
+#  Copyright (c) 2024 BES Technic, Ltd.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, see <http://www.gnu.org/licenses/>.
+
+&beco            opc1 opc2  crn  crd   crm rt rt2
+
+%t_opc1_3      28:1 21:3
+%t_opc1_4      28:1 20:4
+%t_opc2_4      28:1 4:4
+
+#@becocdp      ... t2:1 ....   opc1:4 crn:4 crd:4  ....  opc2:3  . crm:4    &beco
+#@becomcr      ... t2:1 .... opc1:3 . crn:4  rt:4  ....  opc2:3  . crm:4    &beco
+#@becomcrr     ... t2:1 ....    ... . rt2:4  rt:4  ....     opc1:4 crm:4    &beco
+
+@cdp           ...    . ....     .... crn:4 crd:4  ....  opc2:3  . crm:4    &beco    rt=0 rt2=0 opc1=%t_opc1_4
+BECO_CDP       111    . 1110     ....  ....  ....  0000     ...  0  ....    @cdp
+
+@mcr_mrc       ...    . ....   ...  . crn:4  rt:4   ....  opc2:3  . crm:4   &beco    crd=0 rt2=0  opc1=%t_opc1_3
+BECO_MCR       111    . 1110   ...  0  ....  ....   0000     ...  1  ....   @mcr_mrc
+BECO_MRC       111    . 1110   ...  1  ....  ....   0000     ...  1  ....   @mcr_mrc
+
+@mcrr_mrrc     ...    . ....   ...  . rt2:4  rt:4   ....       .... crm:4   &beco  crn=0 crd=0 opc2=0  opc1=%t_opc2_4
+BECO_MCRR      111    . 1100   010  0  ....  ....   0000       ....  ....   @mcrr_mrrc
+BECO_MRRC      111    . 1100   010  1  ....  ....   0000       ....  ....   @mcrr_mrrc
+
+
+
+
