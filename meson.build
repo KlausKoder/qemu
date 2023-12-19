@@ -4325,6 +4325,9 @@ if have_system
   summary_info += {'out of process emulation': multiprocess_allowed}
   summary_info += {'vfio-user server': vfio_user_server_allowed}
 endif
+summary_info += {'Beco support':     (config_target.has_key('CONFIG_TARGET_ARM_M_BECO')
+                                and 'y' == config_target.get('CONFIG_TARGET_ARM_M_BECO'))}
+
 summary(summary_info, bool_yn: true, section: 'Targets and accelerators')
 
 # Block layer

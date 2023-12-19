@@ -9021,6 +9021,16 @@ static void disas_thumb2_insn(DisasContext *s, uint32_t insn)
         }
     }
 
+#if defined CONFIG_TARGET_ARM_M_BECO && CONFIG_TARGET_ARM_M_BECO != 0
+    if (arm_dc_feature(s, ARM_FEATURE_M)) {
+        /*
+         * Beco, if enabled takes precedence over undefined and "NOCP".
+         */
+        if (disas_m_beco(s, insn)) {
+            return;
+        }
+    }
+#endif
     if (arm_dc_feature(s, ARM_FEATURE_M)) {
         /*
          * NOCP takes precedence over any UNDEF for (almost) the

@@ -36,6 +36,16 @@ else
     arm_ss.add(files('tcg-stubs.c'))
 endif
 
+if 'CONFIG_TARGET_ARM_M_BECO' in config_target
+   beco_lib = static_library('beco', objects : 'beco/beco-sim.a')
+   beco_dep = declare_dependency(
+      link_whole: beco_lib,
+      include_directories: include_directories('beco/include'),
+      link_args: '-lstdc++'
+   )
+   user_ss.add(beco_dep)
+endif
+
 target_arch += {'arm': arm_ss}
 target_system_arch += {'arm': arm_system_ss}
 target_user_arch += {'arm': arm_user_ss}

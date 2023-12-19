@@ -19,8 +19,14 @@ gen_a32 = [
   decodetree.process('t16.decode', extra_args: ['-w', '16', '--static-decode=disas_t16']),
 ]
 
+if 'CONFIG_TARGET_ARM_M_BECO' in config_target
+  arm_ss.add(decodetree.process('m-beco.decode', extra_args: '--decode=disas_m_beco'))
+  arm_ss.add(files('translate-m-beco.c'))
+endif
+
 arm_ss.add(gen_a32)
 arm_ss.add(when: 'TARGET_AARCH64', if_true: gen_a64)
+
 
 arm_ss.add(files(
   'cpu32.c',

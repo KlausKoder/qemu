@@ -41,6 +41,9 @@
 #include "hw/intc/armv7m_nvic.h"
 #endif /* CONFIG_TCG */
 #endif /* !CONFIG_USER_ONLY */
+#if defined CONFIG_TARGET_ARM_M_BECO && CONFIG_TARGET_ARM_M_BECO != 0
+#include "beco/include/beco-sim.h"
+#endif
 #include "sysemu/tcg.h"
 #include "sysemu/qtest.h"
 #include "sysemu/hw_accel.h"
@@ -1726,6 +1729,16 @@ void arm_cpu_post_init(Object *obj)
                                      qdev_prop_allow_set_link_before_realize,
                                      OBJ_PROP_LINK_STRONG);
         }
+    }
+#endif
+
+
+#if defined CONFIG_TARGET_ARM_M_BECO && CONFIG_TARGET_ARM_M_BECO != 0
+    set_feature(&cpu->env, BES_FEATURE_M_BECO);
+    if (arm_feature(&cpu->env, BES_FEATURE_M_BECO)) {
+        static char cc[1] = {""};
+        static char *empty[1] = {cc};
+        beco_init(1, empty, empty);
     }
 #endif
 }
