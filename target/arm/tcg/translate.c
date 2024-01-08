@@ -9056,6 +9056,8 @@ static void disas_thumb2_insn(DisasContext *s, uint32_t insn)
         }
     }
 #endif
+
+#if !(defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT)
     if (arm_dc_feature(s, ARM_FEATURE_M)) {
         /*
          * NOCP takes precedence over any UNDEF for (almost) the
@@ -9068,6 +9070,7 @@ static void disas_thumb2_insn(DisasContext *s, uint32_t insn)
             return;
         }
     }
+#endif
 
     if ((insn & 0xef000000) == 0xef000000) {
         /*

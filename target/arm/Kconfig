@@ -8,6 +8,11 @@ config ARM
 
 config TARGET_ARM_M_BECO
     bool
+
+config USER_TARGET_ICOUNT
+    bool
+    # When this flag is set, then the target icount is number fo instructions
+    # executed, rather than host cpu cycles.
     depends on ARM
 
 config AARCH64

@@ -8,6 +8,15 @@ stub_ss.add(files('cpu-get-clock.c'))
 stub_ss.add(files('cpus-get-virtual-clock.c'))
 stub_ss.add(files('qemu-timer-notify-cb.c'))
 stub_ss.add(files('icount.c'))
+
+# Values in config_target[] are 'y' or 'n', both of which are 'True'. Explicitly filter
+# out the 'n':
+if config_target.has_key('CONFIG_USER_TARGET_ICOUNT') and config_target['CONFIG_USER_TARGET_ICOUNT'] != 'n'
+  specific_ss.add(
+    when: ['CONFIG_USER_TARGET_ICOUNT','CONFIG_USER_ONLY', 'CONFIG_TCG'],
+    if_true: files('icount-user.c'))
+endif
+
 stub_ss.add(files('dump.c'))
 stub_ss.add(files('error-printf.c'))
 stub_ss.add(files('fdset.c'))

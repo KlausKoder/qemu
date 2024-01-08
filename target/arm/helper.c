@@ -920,6 +920,8 @@ static uint64_t cycles_get_count(CPUARMState *env)
 #ifndef CONFIG_USER_ONLY
     return muldiv64(qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL),
                    ARM_CPU_FREQ, NANOSECONDS_PER_SECOND);
+#elif defined CONFIG_USER_TARGET_ICOUNT
+    return icount_get();
 #else
     return cpu_get_host_ticks();
 #endif
@@ -1300,6 +1302,12 @@ static void pmccntr_op_start(CPUARMState *env)
 {
     uint64_t cycles = cycles_get_count(env);
 
+#if defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT
+    uint64_t new_pmccntr = cycles - env->cp15.c15_ccnt_delta;
+    env->cp15.c15_ccnt = new_pmccntr;
+    env->cp15.c15_ccnt_delta = cycles;
+#else
+
     if (pmu_counter_enabled(env, 31)) {
         uint64_t eff_cycles = cycles;
         if (pmccntr_clockdiv_enabled(env)) {
@@ -1318,6 +1326,7 @@ static void pmccntr_op_start(CPUARMState *env)
         env->cp15.c15_ccnt = new_pmccntr;
     }
     env->cp15.c15_ccnt_delta = cycles;
+#endif
 }
 
 /*
@@ -1327,6 +1336,11 @@ static void pmccntr_op_start(CPUARMState *env)
  */
 static void pmccntr_op_finish(CPUARMState *env)
 {
+#if defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT
+    uint64_t prev_cycles = env->cp15.c15_ccnt_delta;
+    env->cp15.c15_ccnt_delta = prev_cycles - env->cp15.c15_ccnt;
+#endif
+
     if (pmu_counter_enabled(env, 31)) {
 #ifndef CONFIG_USER_ONLY
         /* Calculate when the counter will next overflow */
@@ -8179,6 +8193,16 @@ void register_cp_regs_for_features(ARMCPU *cpu)
     /* Register all the coprocessor registers based on feature bits */
     CPUARMState *env = &cpu->env;
     if (arm_feature(env, ARM_FEATURE_M)) {
+#if defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT
+        ARMCPRegInfo v8m_ccnt_regs[] = {
+            { .name = "PMCCNTR", .cp = 15, .crn = 9, .crm = 13, .opc1 = 0, .opc2 = 0,
+              .access = PL0_RW, .resetvalue = 0, .type = ARM_CP_ALIAS | ARM_CP_IO,
+              .fgt = FGT_PMCCNTR_EL0,
+              .readfn = pmccntr_read, .writefn = pmccntr_write32,
+              .accessfn = pmreg_access_ccntr },
+            };
+        define_arm_cp_regs(cpu, v8m_ccnt_regs);
+#endif
         /* M profile has no coprocessor registers */
         return;
     }
