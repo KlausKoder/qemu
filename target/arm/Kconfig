@@ -8,6 +8,8 @@ config ARM
 
 config TARGET_ARM_M_BECO
     bool
+    select USER_TARGET_ICOUNT if CONFIG_USER_ONLY
+    depends on ARM
 
 config USER_TARGET_ICOUNT
     bool
