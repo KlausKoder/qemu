@@ -11,7 +11,9 @@ tcg_specific_ss.add(files(
   'translate-all.c',
   'translator.c',
 ))
-tcg_specific_ss.add(when: 'CONFIG_USER_ONLY', if_true: files('user-exec.c'))
+tcg_specific_ss.add(when: 'CONFIG_USER_ONLY', if_true: files(
+  'user-exec.c',  'icount-user.c'
+))
 tcg_specific_ss.add(when: 'CONFIG_SYSTEM_ONLY', if_false: files('user-exec-stub.c'))
 if get_option('plugins')
   tcg_specific_ss.add(files('plugin-gen.c'))

@@ -939,6 +939,8 @@ static uint64_t cycles_get_count(CPUARMState *env)
 #ifndef CONFIG_USER_ONLY
     return muldiv64(qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL),
                    ARM_CPU_FREQ, NANOSECONDS_PER_SECOND);
+#elif defined CONFIG_USER_TARGET_ICOUNT
+    return icount_get();
 #else
     return cpu_get_host_ticks();
 #endif
@@ -1193,6 +1195,9 @@ static bool pmu_counter_enabled(CPUARMState *env, uint8_t counter)
     uint64_t mdcr_el2;
     uint8_t hpmn;
 
+#if defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT
+    return counter == 31;
+#endif
     /*
      * We might be called for M-profile cores where MDCR_EL2 doesn't
      * exist and arm_mdcr_el2_eff() will assert, so this early-exit check
@@ -1387,6 +1392,7 @@ static void pmccntr_op_finish(CPUARMState *env)
 
 static void pmevcntr_op_start(CPUARMState *env, uint8_t counter)
 {
+    if (counter >= 31) return;
 
     uint16_t event = env->cp15.c14_pmevtyper[counter] & PMXEVTYPER_EVTCOUNT;
     uint64_t count = 0;
@@ -8643,6 +8649,17 @@ void register_cp_regs_for_features(ARMCPU *cpu)
     /* Register all the coprocessor registers based on feature bits */
     CPUARMState *env = &cpu->env;
     if (arm_feature(env, ARM_FEATURE_M)) {
+#if defined CONFIG_USER_ONLY && defined CONFIG_USER_TARGET_ICOUNT
+         /* In USER mode simulate CP15 icount instructions */
+        ARMCPRegInfo v8m_ccnt_regs[] = {
+            { .name = "PMCCNTR", .cp = 15, .crn = 9, .crm = 13, .opc1 = 0, .opc2 = 0,
+              .access = PL0_RW, .resetvalue = 0, .type = ARM_CP_ALIAS | ARM_CP_IO,
+              .fgt = FGT_PMCCNTR_EL0,
+              .readfn = pmccntr_read, .writefn = pmccntr_write32,
+              .accessfn = pmreg_access_ccntr },
+            };
+        define_arm_cp_regs(cpu, v8m_ccnt_regs);
+#endif
         /* M profile has no coprocessor registers */
         return;
     }

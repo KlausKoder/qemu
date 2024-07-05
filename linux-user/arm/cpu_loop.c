@@ -26,6 +26,11 @@
 #include "semihosting/common-semi.h"
 #include "target/arm/syndrome.h"
 
+#if defined CONFIG_USER_TARGET_ICOUNT
+#include "sysemu/cpu-timers.h"
+#endif
+#define icount_large_cpu_budget 32767
+
 #define get_user_code_u32(x, gaddr, env)                \
     ({ abi_long __r = get_user_u32((x), (gaddr));       \
         if (!__r && bswap_code(arm_sctlr_b(env))) {     \
@@ -316,6 +321,39 @@ static bool emulate_arm_fpa11(CPUARMState *env, uint32_t opcode)
     return true;
 }
 
+
+static void icount_prepare_for_run(CPUState *cpu, int64_t cpu_budget)
+{
+#if defined CONFIG_USER_TARGET_ICOUNT
+    int insns_left;
+
+    if (!icount_enabled()) return;
+
+    g_assert(cpu->neg.icount_decr.u16.low == 0);
+    g_assert(cpu->icount_extra == 0);
+
+    cpu->icount_budget = cpu_budget;
+    insns_left = MIN(0xffff, cpu->icount_budget);
+    cpu->neg.icount_decr.u16.low = insns_left;
+    cpu->icount_extra = cpu->icount_budget - insns_left;
+#endif
+}
+
+static void icount_process_data(CPUState *cpu)
+{
+#if defined CONFIG_USER_TARGET_ICOUNT
+    if (!icount_enabled()) return;
+
+    /* Account for executed instructions */
+    icount_update(cpu);
+
+    /* Reset the counters */
+    cpu->neg.icount_decr.u16.low = 0;
+    cpu->icount_extra = 0;
+    cpu->icount_budget = 0;
+#endif
+}
+
 void cpu_loop(CPUARMState *env)
 {
     CPUState *cs = env_cpu(env);
@@ -324,9 +362,11 @@ void cpu_loop(CPUARMState *env)
     abi_ulong ret;
 
     for(;;) {
+        icount_prepare_for_run(cs, icount_large_cpu_budget);
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
         cpu_exec_end(cs);
+        icount_process_data(cs);
         process_queued_cpu_work(cs);
 
         switch(trapnr) {
