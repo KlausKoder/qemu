@@ -98,7 +98,7 @@ static bool trans_BECO_CDP(DisasContext *ctx, arg_BECO_CDP *cmd)
     qemu_log_mask(CPU_LOG_INT, "Translate CDP opc1:%01x opc2:%01x\n", cmd->opc1, cmd->opc2);
 
     cp_cmd = tcg_constant_i32(ctx->insn);
-    gen_helper_beco_cdp(cpu_env, cp_cmd);
+    gen_helper_beco_cdp(tcg_env, cp_cmd);
 
     return true;
 }
@@ -118,7 +118,7 @@ static bool trans_BECO_MCR(DisasContext *ctx, arg_BECO_MCR *cmd)
 
     cp_cmd = tcg_constant_i32(ctx->insn);
     t0 = load_reg(ctx, cmd->rt);
-    gen_helper_beco_mcr(cpu_env, cp_cmd, t0);
+    gen_helper_beco_mcr(tcg_env, cp_cmd, t0);
 
     return true;
 
@@ -139,7 +139,7 @@ static bool trans_BECO_MRC(DisasContext *ctx, arg_BECO_MRC *cmd)
 
     cp_cmd = tcg_constant_i32(ctx->insn);
     tmp = tcg_temp_new_i32();
-    gen_helper_beco_mrc(tmp, cpu_env, cp_cmd);
+    gen_helper_beco_mrc(tmp, tcg_env, cp_cmd);
     store_reg(ctx, cmd->rt, tmp);
 
     return true;
@@ -162,7 +162,7 @@ static bool trans_BECO_MCRR(DisasContext *ctx, arg_BECO_MCRR *cmd)
     cp_cmd = tcg_constant_i32(ctx->insn);
     t0 = load_reg(ctx, cmd->rt);
     t1 = load_reg(ctx, cmd->rt2);
-    gen_helper_beco_mcrr(cpu_env, cp_cmd, t0, t1);
+    gen_helper_beco_mcrr(tcg_env, cp_cmd, t0, t1);
 
     return true;
 }
@@ -185,7 +185,7 @@ static bool trans_BECO_MRRC(DisasContext *ctx, arg_BECO_MRRC *cmd)
     cp_cmd = tcg_constant_i32(ctx->insn);
 
     t64 = tcg_temp_new_i64();
-    gen_helper_beco_mrrc(t64, cpu_env, cp_cmd);
+    gen_helper_beco_mrrc(t64, tcg_env, cp_cmd);
 
     tl = tcg_temp_new_i32();
     th = tcg_temp_new_i32();
